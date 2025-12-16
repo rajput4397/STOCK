@@ -238,7 +238,7 @@ def add_supertrend_angle(st_df):
         st_df["ST_angle_deg"].iat[i] = angle_deg
 
     print(st_df)
-    st_df.to_csv(f"{SAVE_DIR}/angle.csv")
+    # st_df.to_csv(f"{SAVE_DIR}/angle.csv")
 
     return st_df
 

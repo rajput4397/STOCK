@@ -3,21 +3,11 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import mplfinance as mpf
-import smtplib
-from email.mime.text import MIMEText
-from math import atan, degrees
 import requests
+from math import acos, degrees, sqrt
+from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 
-
-# TICKER = "HAL.NS"
-# PERIOD = "1y"
-# START_DATE = "2025-12-05"  # format: YYYY-MM-DD
-# END_DATE = "2025-12-12"    # format: YYYY-MM-DD
-# INTERVAL = "1d" 
-
-
-SAVE_DIR = r'C:\Users\ADMIN\Documents\Audacity'
-OUTFILE = os.path.join(SAVE_DIR, "heikin_ashi_supertrend_HAL.png")
 
 ATR_PERIOD = 10     # as chosen
 MULTIPLIER = 3  
@@ -27,7 +17,7 @@ def fetch_prices(TICKER,start,end,interval):
 
     df = yf.download(TICKER, start, end, interval, auto_adjust=False)
     if df.empty:
-        raise SystemExit("No data fetched for ticker: " + TICKER)
+        raise  ValueError(f"No data fetched for ticker: {TICKER}")
     # print(df)
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [c[0] for c in df.columns]
@@ -121,13 +111,6 @@ def compute_supertrend(data, period=10, multiplier=3):
 
         supertrend.iat[i] = final_lb.iat[i] if direction.iat[i] == 1 else final_ub.iat[i]
 
-        # print every row
-        # print(f"{df_local.index[i].strftime('%Y-%m-%d'):<12} "
-        #     f"{df_local['Close'].iat[i]:>10.2f} "
-        #     f"{final_ub.iat[i]:>12.2f} "
-        #     f"{final_lb.iat[i]:>12.2f} "
-        #     f"{supertrend.iat[i]:>12.2f} "
-        #     f"{direction.iat[i]:>6}")
 
     df_local["ATR"] = atr
     df_local["Final_UB"] = final_ub
@@ -179,12 +162,11 @@ def plot_graph(st_df, ha,TICKER):
         tight_layout=True
     )
 
-    print("Chart saved to:", OUTFILE)
+    # print("Chart saved to:", OUTFILE)
 
 
 
-import numpy as np
-from math import acos, degrees, sqrt
+
 
 def add_supertrend_angle(st_df):
     """
@@ -237,7 +219,7 @@ def add_supertrend_angle(st_df):
 
         st_df["ST_angle_deg"].iat[i] = angle_deg
 
-    print(st_df)
+    # print(st_df)
     # st_df.to_csv(f"{SAVE_DIR}/angle.csv")
 
     return st_df
@@ -297,17 +279,21 @@ def has_green_st_small_angle(st_df, target_date):
 
 
 
-def calculate(TICKER,PERIOD,START_DATE,END_DATE,INTERVAL,ATR_PERIOD,MULTIPLIER,BOT_TOKEN,CHAT_ID):
+def calculate(TICKER):
+    today = date.today()
+    # today = date(2025, 3, 20)
+    two_months_ago = today - relativedelta(months=2)
+    tomorrow = str(today + timedelta(days=1))
 
+    START_DATE= str(two_months_ago)
+    END_DATE= str(tomorrow)
     TICKER = TICKER
-    PERIOD = PERIOD
-    START_DATE = START_DATE  # format: YYYY-MM-DD
-    END_DATE = END_DATE    # format: YYYY-MM-DD
-    INTERVAL = INTERVAL
-    ATR_PERIOD = ATR_PERIOD    # as chosen
-    MULTIPLIER = MULTIPLIER   
-    BOT_TOKEN = BOT_TOKEN
-    CHAT_ID = CHAT_ID
+    PERIOD = "1y"
+    INTERVAL = "1d"
+    ATR_PERIOD = 10     # as chosen
+    MULTIPLIER = 3   
+    BOT_TOKEN = "8254287542:AAEoVHtqwTrSSWpL06Fn58_lRsBVoNw5DEQ"
+    CHAT_ID = "-5037219263"
 
 
 
@@ -315,16 +301,32 @@ def calculate(TICKER,PERIOD,START_DATE,END_DATE,INTERVAL,ATR_PERIOD,MULTIPLIER,B
 
 
     # "853973272"
-    df=fetch_prices(TICKER,START_DATE,END_DATE,INTERVAL)
-    ha = heikin_ashi(df)
-    st_df = compute_supertrend(ha, period=ATR_PERIOD, multiplier=MULTIPLIER)
-    # plot_graph(st_df,ha,TICKER)
-    st_df = add_supertrend_angle(st_df)
-    flag=has_green_st_small_angle(st_df,END_DATE)
-    if flag==False:
-        return
-    message=TICKER+' '+END_DATE
-    send_telegram_alert(BOT_TOKEN,CHAT_ID,message)
+    try:
+        df = fetch_prices(TICKER, START_DATE, END_DATE, INTERVAL)
+
+        ha = heikin_ashi(df)
+
+        st_df = compute_supertrend(
+            ha,
+            period=ATR_PERIOD,
+            multiplier=MULTIPLIER
+        )
+
+        st_df = add_supertrend_angle(st_df)
+
+        flag = has_green_st_small_angle(st_df, today)
+
+        if  flag==False:
+            return   # graceful exit, no signal
+
+        message = TICKER+' '+  str(today)
+        send_telegram_alert(BOT_TOKEN, CHAT_ID, message)
+
+        return 
+
+    except Exception as e:
+        send_telegram_alert(BOT_TOKEN, CHAT_ID, TICKER+' '+ str(e))
+        return 
 
 if __name__ == "__main__":
     calculate()

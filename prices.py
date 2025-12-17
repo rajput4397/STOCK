@@ -268,31 +268,37 @@ def send_telegram_alert(bot_token, chat_id, message):
         print("Telegram error:", e)
 
 
-def get_green_st_small_angle_dates(st_df):
+
+
+
+def has_green_st_small_angle(st_df, target_date):
     """
-    Returns space-separated dates (ascending) where:
-    - SuperTrend is green (ST_dir == 1)
-    - ST_angle_deg is between 0 and 30 (exclusive)
+    Returns True if target_date satisfies:
+    - ST_dir == 1 (green SuperTrend)
+    - 0 < ST_angle_deg < 30
+    Else returns False
     """
 
     df = st_df.copy()
     df.index = pd.to_datetime(df.index)
 
-    filtered = df[
-        (df["ST_dir"] == 1) &
-        (df["ST_angle_deg"].notna()) &
-        (df["ST_angle_deg"] > 0) &
-        (df["ST_angle_deg"] < 30)
-    ]
+    target_date = pd.to_datetime(target_date).normalize()
 
-    if filtered.empty:
-        return ""
+    if target_date not in df.index.normalize():
+        return False
 
-    dates = filtered.sort_index().index.strftime("%Y-%m-%d")
-    return " ".join(dates)
+    row = df.loc[df.index.normalize() == target_date].iloc[0]
+
+    return (
+        row["ST_dir"] == 1 and
+        pd.notna(row["ST_angle_deg"]) and
+        0 < row["ST_angle_deg"] < 30
+    )
+
 
 
 def calculate(TICKER,PERIOD,START_DATE,END_DATE,INTERVAL,ATR_PERIOD,MULTIPLIER,BOT_TOKEN,CHAT_ID):
+
     TICKER = TICKER
     PERIOD = PERIOD
     START_DATE = START_DATE  # format: YYYY-MM-DD
@@ -302,16 +308,22 @@ def calculate(TICKER,PERIOD,START_DATE,END_DATE,INTERVAL,ATR_PERIOD,MULTIPLIER,B
     MULTIPLIER = MULTIPLIER   
     BOT_TOKEN = BOT_TOKEN
     CHAT_ID = CHAT_ID
+
+
+
+
+
+
     # "853973272"
     df=fetch_prices(TICKER,START_DATE,END_DATE,INTERVAL)
     ha = heikin_ashi(df)
     st_df = compute_supertrend(ha, period=ATR_PERIOD, multiplier=MULTIPLIER)
     # plot_graph(st_df,ha,TICKER)
     st_df = add_supertrend_angle(st_df)
-    message=get_green_st_small_angle_dates(st_df)
-    if len(message)<3:
+    flag=has_green_st_small_angle(st_df,END_DATE)
+    if flag==False:
         return
-    message=TICKER+' '+message
+    message=TICKER+' '+END_DATE
     send_telegram_alert(BOT_TOKEN,CHAT_ID,message)
 
 if __name__ == "__main__":

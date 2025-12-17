@@ -279,7 +279,7 @@ def has_green_st_small_angle(st_df, target_date):
 
 
 
-def calculate(TICKER):
+def calculate(TICKER,BOT_TOKEN,CHAT_ID):
     today = date.today()
     # today = date(2025, 3, 20)
     two_months_ago = today - relativedelta(months=2)
@@ -292,8 +292,8 @@ def calculate(TICKER):
     INTERVAL = "1d"
     ATR_PERIOD = 10     # as chosen
     MULTIPLIER = 3   
-    BOT_TOKEN = "8254287542:AAEoVHtqwTrSSWpL06Fn58_lRsBVoNw5DEQ"
-    CHAT_ID = "-5037219263"
+    BOT_TOKEN = BOT_TOKEN
+    CHAT_ID = CHAT_ID
 
 
 

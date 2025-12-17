@@ -4,3 +4,4 @@ numpy
 mplfinance
 requests
 pandas_market_calendars
+python-dotenv

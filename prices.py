@@ -4,9 +4,10 @@ import pandas as pd
 import numpy as np
 import mplfinance as mpf
 import requests
-from math import acos, degrees, sqrt
+from math import acos, degrees, atan, sqrt
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+
 
 
 ATR_PERIOD = 10     # as chosen
@@ -166,66 +167,6 @@ def plot_graph(st_df, ha,TICKER):
 
 
 
-
-
-def add_supertrend_angle(st_df):
-    """
-    Adds a column 'ST_angle_deg' representing the geometric angle
-    between SuperTrend segments:
-
-    Points:
-    day before yesterday -> (x-1, y1)
-    yesterday            -> (x,   y)   [vertex]
-    today                -> (x+1, y2)
-
-    Angle is computed ONLY if:
-    - ST_dir[t] == 1
-    - At least 3 rows exist
-    """
-
-    st_df = st_df.copy()
-    st_df["ST_angle_deg"] = np.nan
-
-    for i in range(2, len(st_df)):
-
-        # today must be bullish
-        if st_df["ST_dir"].iat[i] != 1:
-            continue
-
-        y2 = st_df["SuperTrend"].iat[i]     # today
-        y  = st_df["SuperTrend"].iat[i - 1] # yesterday (vertex)
-        y1 = st_df["SuperTrend"].iat[i - 2] # day before
-
-        # vectors
-        vAx, vAy = 1,  y2 - y
-        vBx, vBy = -1, y1 - y
-
-        # dot product
-        dot = vAx * vBx + vAy * vBy
-
-        # magnitudes
-        magA = sqrt(vAx**2 + vAy**2)
-        magB = sqrt(vBx**2 + vBy**2)
-
-        if magA == 0 or magB == 0:
-            continue
-
-        cos_theta = dot / (magA * magB)
-
-        # numerical safety
-        cos_theta = max(-1.0, min(1.0, cos_theta))
-
-        angle_deg = degrees(acos(cos_theta))
-
-        st_df["ST_angle_deg"].iat[i] = angle_deg
-
-    # print(st_df)
-    # st_df.to_csv(f"{SAVE_DIR}/angle.csv")
-
-    return st_df
-
-
-
 def send_telegram_alert(bot_token, chat_id, message):
     """
     Sends a Telegram message to a user or group
@@ -251,31 +192,115 @@ def send_telegram_alert(bot_token, chat_id, message):
 
 
 
-
-
-def has_green_st_small_angle(st_df, target_date):
+def today_green_st_small_angle(st_df, target_date=None):
     """
-    Returns True if target_date satisfies:
-    - ST_dir == 1 (green SuperTrend)
-    - 0 < ST_angle_deg < 30
-    Else returns False
+    Calculates SuperTrend angle ONLY for today and checks condition.
+
+    Conditions:
+    - ST_dir == 1 (green)
+    - 0 < angle < 30 degrees
+
+    Returns:
+    (is_valid: bool, angle_deg: float or None)
     """
 
     df = st_df.copy()
     df.index = pd.to_datetime(df.index)
 
-    target_date = pd.to_datetime(target_date).normalize()
+    # pick target date (default = latest row)
+    if target_date is None:
+        df = df.tail(3)
+    else:
+        target_date = pd.to_datetime(target_date).normalize()
+        df = df[df.index.normalize() <= target_date].tail(3)
 
-    if target_date not in df.index.normalize():
-        return False
+    # need exactly 3 rows
+    if len(df) < 3:
+        return False, None
 
-    row = df.loc[df.index.normalize() == target_date].iloc[0]
+    # unpack rows
+    y1 = df["SuperTrend"].iloc[0]  # day before yesterday
+    y  = df["SuperTrend"].iloc[1]  # yesterday (vertex)
+    y2 = df["SuperTrend"].iloc[2]  # today
 
-    return (
-        row["ST_dir"] == 1 and
-        pd.notna(row["ST_angle_deg"]) and
-        0 < row["ST_angle_deg"] < 30
-    )
+    st_dir_today = df["ST_dir"].iloc[2]
+
+    # must be green today
+    if st_dir_today != 1:
+        return False, None
+
+    # vectors
+    vAx, vAy = 1,  y2 - y
+    vBx, vBy = -1, y1 - y
+
+    # dot product & magnitudes
+    dot = vAx * vBx + vAy * vBy
+    magA = sqrt(vAx**2 + vAy**2)
+    magB = sqrt(vBx**2 + vBy**2)
+
+    if magA == 0 or magB == 0:
+        return False, None
+
+    cos_theta = dot / (magA * magB)
+    cos_theta = max(-1.0, min(1.0, cos_theta))  # numerical safety
+
+    angle_deg = degrees(acos(cos_theta))
+
+    # apply your filter
+    is_valid = 0 < angle_deg < 30
+
+    return is_valid, angle_deg
+
+
+
+
+
+def latest_supertrend_acceleration(st_df, window=5, angle_threshold=90):
+    """
+    Calculates SuperTrend acceleration ONLY for today.
+
+    Returns:
+    - angle (float or None)
+    - is_bullish_acceleration (bool)
+    """
+
+    # Need at least 2*window points
+    if len(st_df) < 2 * window:
+        return None, False
+
+    df = st_df.copy()
+
+    # Today's index
+    i = len(df) - 1
+
+    # Must be bullish today
+    if df["ST_dir"].iat[i] != 1:
+        return None, False
+
+    # Extract SuperTrend values
+    y = df["SuperTrend"].values
+
+    new_slice = y[i - window + 1 : i + 1]              # last window
+    old_slice = y[i - 2*window + 1 : i - window + 1]  # previous window
+
+    x = np.arange(window)
+
+    # Linear regression (least squares)
+    m_new, _ = np.polyfit(x, new_slice, 1)
+    m_old, _ = np.polyfit(x, old_slice, 1)
+
+    # Both slopes must be positive
+    if m_new <= 0 or m_old <= 0:
+        return None, False
+
+    # Angle between two lines
+    angle = abs(degrees(atan((m_new - m_old) / (1 + m_old * m_new))))
+
+    # Final signal
+    is_bull_accel = (m_new > m_old) and (angle > angle_threshold)
+
+    return angle, is_bull_accel
+
 
 
 
@@ -312,17 +337,20 @@ def calculate(TICKER,BOT_TOKEN,CHAT_ID):
             multiplier=MULTIPLIER
         )
 
-        st_df = add_supertrend_angle(st_df)
 
-        flag = has_green_st_small_angle(st_df, today)
+        flag, angle = today_green_st_small_angle(st_df)
+        angle,flag2=latest_supertrend_acceleration(st_df, window=5, angle_threshold=90)
 
-        if  flag==False:
-            return   # graceful exit, no signal
+        if  flag==True:
+               # graceful exit, no signal
 
-        message = TICKER+' '+  str(today)
-        print(st_df)
-        send_telegram_alert(BOT_TOKEN, CHAT_ID, message)
-
+            message=TICKER+' '+str(angle)+' '+  str(today)+'trend begining'
+            print(st_df)
+            send_telegram_alert(BOT_TOKEN, CHAT_ID, message)
+        if flag2==True:
+            message=TICKER+' '+str(angle)+' '+  str(today)+'trend increasing'
+            print(st_df)
+            send_telegram_alert(BOT_TOKEN, CHAT_ID, message)
         return 
 
     except Exception as e:

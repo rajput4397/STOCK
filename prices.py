@@ -320,7 +320,7 @@ def calculate(TICKER,BOT_TOKEN,CHAT_ID):
             return   # graceful exit, no signal
 
         message = TICKER+' '+  str(today)
-        print(st_df)
+        # print(st_df)
         send_telegram_alert(BOT_TOKEN, CHAT_ID, message)
 
         return 

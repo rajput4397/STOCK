@@ -281,8 +281,8 @@ def has_green_st_small_angle(st_df, target_date):
 
 def calculate(TICKER,BOT_TOKEN,CHAT_ID):
     today = date.today()
-    # today = date(2025, 3, 20)
-    two_months_ago = today - relativedelta(months=2)
+    # today = date(2025, 12, 23)
+    two_months_ago = today - relativedelta(months=6)
     tomorrow = str(today + timedelta(days=1))
 
     START_DATE= str(two_months_ago)

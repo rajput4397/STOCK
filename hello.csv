@@ -244,7 +244,6 @@ Indraprastha Gas,IGL.NS
 New India Assurance,NIACL.NS
 Gujarat Gas,GUJGASLTD.NS
 Syngene International,SYNGENE.NS
-Piramal Enterprises,PEL.NS
 Asahi India Glass,ASAHIINDIA.NS
 Ather Energy,ATHERENERG.NS
 Ramco Cements,RAMCOCEM.NS
@@ -258,7 +257,8 @@ Amber Enterprises India,AMBER.NS
 EIH Limited,EIHOTEL.NS
 JSW Holdings,JSWHL.NS
 Force Motors,FORCEMOT.NS
-"Sumitomo Chemical India",SUMICHEM.NS
+"Sumitomo Chemical
+ India",SUMICHEM.NS
 Piramal Pharma,PPLPHARMA.NS
 Hatsun Agro Products,HATSUN.NS
 Deepak Nitrite,DEEPAKNTR.NS
@@ -291,7 +291,6 @@ Kajaria Ceramics,KAJARIACER.NS
 Grindwell Norton,GRINDWELL.NS
 ReNew Power,RNW
 Amara Raja Energy &amp; Mobility,ARE&M.NS
-Welspun India,WELSPUNIND.NS
 Craftsman Automation,CRAFTSMAN.NS
 Alembic Pharmaceuticals,APLLTD.NS
 BASF India,BASF.NS
@@ -306,7 +305,7 @@ Gujarat Mineral Development,GMDCLTD.NS
 Prime Focus,PFOCUS.NS
 Devyani International,DEVYANI.NS
 Godawari Power &amp; Ispat,GPIL.NS
-Sundaram Finance,SUNDARMHLD.NS
+Sundaram Finance,SUNDARMFIN.NS
 CEAT,CEATLTD.NS
 Elgi Equipments,ELGIEQUIP.NS
 CIE Automotive India,CIEINDIA.NS
@@ -383,7 +382,7 @@ Campus Activewear,CAMPUS.NS
 Transport Corporation of India,TCI.NS
 Ethos Watches,ETHOSLTD.NS
 Alok Industries,ALOKINDS.NS
-Kirloskar Ferrous Industries,KIRLFER.NS
+Kirloskar Ferrous Industries,KIRLFER.BO
 Rashtriya Chemicals and Fertilizers,RCF.NS
 Sify,SIFY
 Karnataka Bank,KTKBANK.NS
@@ -441,18 +440,17 @@ India Tourism Development Corp,ITDC.NS
 Electrosteel Castings,ELECTCAST.NS
 CARE's Ratings,CARERATING.NS
 SML Isuzu,SMLISUZU.NS
-The Tinplate Company Of India,TINPLATE.NS
 Anup Engineering,ANUP.NS
 SPARC,SPARC.NS
 National Fertilizers,NFL.NS
-Tata Steel Long Products,TATASTLLP.NS
+Tata Steel ,TATASTEEL.NS
 Knr Constructions,KNRCON.NS
 JCI Hitachi India,JCHAC.NS
 RPG Life Sciences,RPGLIFE.NS
 Vaibhav Global,VAIBHAVGBL.NS
 Heidelbergcement India,HEIDELBERG.NS
 JTEKT India,JTEKTINDIA.NS
-Tide Water Oil,TIDEWATER.NS
+VEEDOL CORP,VEEDOL.NS
 Orient Electric,ORIENTELEC.NS
 Rain Industries,RAIN.NS
 Foseco India,FOSECOIND.NS
@@ -490,7 +488,7 @@ Prince Pipes And Fittings,PRINCEPIPE.NS
 Imagicaaworld Entertainment,IMAGICAA.NS
 West Coast Paper Mills,WSTCSTPAPR.NS
 Alembic Limited,ALEMBICLTD.NS
-GE Power India,GEPIL.NS
+GE Power India,GVT&D.NS
 Federal-Mogul Goetze,FMGOETZE.NS
 Polyplex,POLYPLEX.NS
 Spandana Sphoorty Financial,SPANDANA.NS

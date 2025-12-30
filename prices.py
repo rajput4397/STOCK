@@ -215,8 +215,8 @@ def send_telegram_alert(bot_token, chat_id, message):
 
 
 def calculate(TICKER,BOT_TOKEN,CHAT_ID):
-    # today = date.today()
-    today = date(2025, 12, 9)
+    today = date.today()
+    # today = date(2025, 12, 9)
     two_months_ago = today - relativedelta(months=6)
     tomorrow = str(today + timedelta(days=1))
 
@@ -264,4 +264,5 @@ def calculate(TICKER,BOT_TOKEN,CHAT_ID):
 
 if __name__ == "__main__":
     calculate()
+
 
